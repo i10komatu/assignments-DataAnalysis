@@ -1,0 +1,121 @@
+\documentclass{jsarticle}
+
+\usepackage[top=30mm, bottom=36mm, left=28mm, right=28mm]{geometry}
+\usepackage[yyyymmdd]{datetime}
+\usepackage{listings}
+\usepackage{../common/mytitle}
+
+\title{データ解析特論 第1回}
+\author{201720690 小松 弘人}
+\date{\today}
+\pagestyle{empty}
+
+\makeatletter
+\def\mojiparline#1{
+    \newcounter{mpl}
+    \setcounter{mpl}{#1}
+    \@tempdima=\linewidth
+    \advance\@tempdima by-\value{mpl}zw
+    \addtocounter{mpl}{-1}
+    \divide\@tempdima by \value{mpl}
+    \advance\kanjiskip by\@tempdima
+    \advance\parindent by\@tempdima
+}
+\makeatother
+\def\linesparpage#1{
+    \baselineskip=\textheight
+    \divide\baselineskip by #1
+}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+\subsection*{問題}
+R-tips P.53の\verb|matpow|関数を用いて計算した正方行列$A$の$n$乗の値が，
+行列の$n$乗を\verb|A%*%A%*%…%*%A|と計算した結果と一致するかを確認せよ．
+一致しない場合には，その原因がどこにあるか考察せよ．
+
+\subsection*{matpow関数}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single]
+> matpow <- function(x, pow=2) {
++   y <- eigen(x)
++   y$vectors %*% diag( (y$values)^pow ) %*% t(y$vectors)
++ }
+\end{lstlisting}
+
+\subsection*{実行結果}
+\subsubsection*{対角行列の場合}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single]
+> A <- diag(1:2)
+> matpow(A, 3)
+     [,1] [,2]
+[1,]    1    0
+[2,]    0    8
+> A %*% A %*% A
+     [,1] [,2]
+[1,]    1    0
+[2,]    0    8
+\end{lstlisting}
+R-tipsに掲載されている通り、$A$が対角行列の場合、結果は一致する。
+
+\subsubsection*{対角行列でない場合}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single]
+> A <- matrix(c(8,4,1,5), 2,2)
+> matpow(A, 3)
+         [,1]     [,2]
+[1,] 368.2647 349.4412
+[2,] 349.4412 424.7353
+> A %*% A %*% A
+     [,1] [,2]
+[1,]  596  133
+[2,]  532  197
+\end{lstlisting}
+
+結果は一致しなかった。
+これは、$A$の固有値分解の式が正しくないからである。
+R-tipsでは、$A$の固有値分解の式は$A = VD{}^t\!V$とされている。
+これが正しければ、\verb|matpow(A, 1)|は$A$と一致するはずである。
+しかし、以下のように\verb|matpow(A, 1)|は$A$と一致しない。
+したがって、固有値分解の式が原因であると考えられる。
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single]
+> A <- matrix(c(8,4,1,5), 2,2)
+> matpow(A, 1)
+         [,1]     [,2]
+[1,] 4.735294 3.558824
+[2,] 3.558824 8.264706
+\end{lstlisting}
+
+\subsection*{修正matpow関数}
+\subsubsection*{修正内容}
+正しい固有値分解の式は、$A = VDV^{-1}$である。
+したがって、\verb|matpow|関数を以下のように修正することで、
+結果が一致するようになる。
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single]
+> matpow = function(x, pow=2) {
++   y=eigen(x)
++   y$vectors %*% diag( (y$values)^pow ) %*% solve(y$vectors)
++ }
+\end{lstlisting}
+
+\subsubsection*{実行結果}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single]
+> matpow(A,1)
+     [,1] [,2]
+[1,]    8    1
+[2,]    4    5
+> A
+     [,1] [,2]
+[1,]    8    1
+[2,]    4    5
+>
+> matpow(A, 3)
+     [,1] [,2]
+[1,]  596  133
+[2,]  532  197
+> A %*% A %*% A
+     [,1] [,2]
+[1,]  596  133
+[2,]  532  197
+\end{lstlisting}
+
+\end{document}
