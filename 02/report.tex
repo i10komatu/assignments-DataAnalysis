@@ -530,6 +530,40 @@ N <- 500; res <- f(N); save(res)
 下の赤線が推定区間の下の値を，
 緑の直線が母集団の平均，および分散を示す．
 
+\subsubsection*{考察}
+図\ref{img:estimate-mean}, \ref{img:estimate-variance}から，
+発生した乱数によって推定区間が大きく変動することが確認できる．
+そこで，上記のスクリプトを$10000$回実行し，推定区間の値を平均することで，
+乱数による影響を抑えたグラフを作成した
+(図\ref{img:estimate-mean-mean}, \ref{img:estimate-variance-mean})．
+
+図\ref{img:estimate-mean-mean}, \ref{img:estimate-variance-mean}より，
+平均，分散共に95\%信頼区間はデータ数$N$を増やすほど
+狭くなっていることが分かる．
+したがって，$N$を増やすほど推定の精度が上がることが分かる．
+
+平均の区間推定においては，$N=200$程度から大きく差が出ないことが
+確認できる．
+正規分布を用いて区間推定を行った場合
+(図\ref{img:estimate-mean-mean}\subref{img:sdkn-mean})と，
+\emph{t}分布を用いて区間推定を行った場合
+(図\ref{img:estimate-mean-mean}\subref{img:sdkt-mean})を比較すると，
+$N$が小さいときは正規分布では推定区間が非常に大きく，精度が低いが，
+\emph{t}分布では推定区間が狭く，比較的精度が高いことが分かる．
+既知の標準偏差を用いた場合
+(図\ref{img:estimate-mean-mean}\subref{img:sdkt-mean},
+\subref{img:sdkn-mean}) と推定標準偏差を用いた場合
+(図\ref{img:estimate-mean-mean}\subref{img:sdut-mean},
+\subref{img:sdun-mean}) の間には大きな差はないと考える．
+よって，データの標準偏差が既知でない場合でも，
+同等な区間推定ができると考えられる．
+
+また，図\ref{img:estimate-mean-mean}に比べ，
+図\ref{img:estimate-variance-mean}は
+$N$が小さいときの推定区間が広く，その後もなかなか推定区間が狭くならない．
+このことから，分散の区間推定においては，推定の精度を高くするためには，
+平均の区間推定よりも多くのデータ数が必要であると考えられる．
+
 \begin{figure}[b]
 	\centering
 	\begin{minipage}{\hsize}
@@ -563,38 +597,43 @@ N <- 500; res <- f(N); save(res)
 		\caption{平均の区間推定 (95\%信頼区間)}
 		\label{img:estimate-mean}
 	\end{minipage}
-\end{figure}
-
-\begin{figure}[b]
-	\centering
 	\includegraphics[width=.25\hsize]{img/vux-500.pdf}
 	\caption{分散の区間推定 (95\%信頼区間)}
 	\label{img:estimate-variance}
+	\begin{minipage}{\hsize}
+		\centering
+		\begin{tabular}{c}
+			\begin{minipage}{0.25\hsize}
+				\centering
+				\includegraphics[width=\linewidth]{img/sdkt.pdf}
+				\subcaption{既知の標準偏差使用\\(\emph{t}分布)}
+				\label{img:sdkt-mean}
+			\end{minipage}
+			\begin{minipage}{0.25\hsize}
+				\centering
+				\includegraphics[width=\linewidth]{img/sdut.pdf}
+				\subcaption{推定標準偏差使用\\(\emph{t}分布)}
+				\label{img:sdut-mean}
+			\end{minipage}
+			\begin{minipage}{0.25\hsize}
+				\centering
+				\includegraphics[width=\linewidth]{img/sdkn.pdf}
+				\subcaption{既知の標準偏差使用\\(正規分布)}
+				\label{img:sdkn-mean}
+			\end{minipage}
+			\begin{minipage}{0.25\hsize}
+				\centering
+				\includegraphics[width=\linewidth]{img/sdun.pdf}
+				\subcaption{推定標準偏差使用\\(正規分布)}
+				\label{img:sdun-mean}
+			\end{minipage}
+		\end{tabular}
+		\caption{平均の区間推定の平均 (95\%信頼区間)}
+		\label{img:estimate-mean-mean}
+	\end{minipage}
+	\includegraphics[width=.25\hsize]{img/vux.pdf}
+	\caption{分散の区間推定の平均 (95\%信頼区間)}
+	\label{img:estimate-variance-mean}
 \end{figure}
-
-\subsubsection*{考察}
-図\ref{img:estimate-mean}, \ref{img:estimate-variance}より，
-平均，分散共に95\%信頼区間はデータ数$N$を増やすほど
-狭くなっていることが分かる．
-したがって，$N$を増やすほど推定の精度が上がることが分かる．
-
-平均の区間推定においては，$N=200$程度から大きく差が出ないことが
-確認できる．
-正規分布を用いて区間推定を行った場合
-(図\ref{img:estimate-mean}\subref{img:sdkn})と，
-\emph{t}分布を用いて区間推定を行った場合
-(図\ref{img:estimate-mean}\subref{img:sdkt})を比較すると，
-$N$が小さいときは正規分布では推定区間が非常に大きく，精度が低いが，
-\emph{t}分布では推定区間が狭く，比較的精度が高いことが分かる．
-既知の標準偏差を用いた場合
-(図\ref{img:estimate-mean}\subref{img:sdkt}, \subref{img:sdkn})と
-推定標準偏差を用いた場合
-(図\ref{img:estimate-mean}\subref{img:sdut}, \subref{img:sdun}) の間には
-大きな差はないと考える．
-
-また，図\ref{img:estimate-mean}に比べ，図\ref{img:estimate-variance}は
-$N$が小さいときの推定区間が広く，その後もなかなか推定区間が狭くならない．
-このことから，分散の区間推定においては，推定の精度を高くするためには，
-平均の区間推定よりも多くのデータ数が必要であると考えられる．
 
 \end{document}

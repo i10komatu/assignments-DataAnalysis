@@ -155,3 +155,34 @@ save <- function(res){
 names <- c("sdkn", "sdun", "sdkt", "sdut", "vux")
 tv <- c(0.86, 0.86, 0.86, 0.86, 1.3**2)
 N <- 500; res <- f(N); save(res)
+
+save <- function(array, name, tv){
+    pdf(sprintf("02\\%s.pdf", name), width=10, height=10)
+    devnum = dev.cur()
+  
+    a = array/M
+  
+    dev.set(devnum)
+    plot(0, 0, type = "n", xlab = "N", ylab = names[i], xlim=c(0, N), ylim=c(tv-2, tv+2))
+    lines(2:N-1, a[,1], col="red"); lines(2:N-1, a[,2], col="red")
+    lines(c(0, M-1), c(tv, tv), col="green4")
+    dev.off(devnum)
+}
+
+N = 500; M = 10000
+sdkn = 0; sdun = 0; sdkt = 0; sdut = 0; vux = 0;
+for(i in 1:M) {
+	res <- f(N)
+	sdkn <- sdkn + res[[1]]
+	sdun <- sdun + res[[2]]
+	sdkt <- sdkt + res[[3]]
+	sdut <- sdut + res[[4]]
+	vux <- vux + res[[5]]
+}
+
+i = 0
+i = i + 1; save(sdkn, names[i], tv[i])
+i = i + 1; save(sdun, names[i], tv[i])
+i = i + 1; save(sdkt, names[i], tv[i])
+i = i + 1; save(sdut, names[i], tv[i])
+i = i + 1; save(vux, names[i], tv[i])
