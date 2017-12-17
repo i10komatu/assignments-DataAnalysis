@@ -1,0 +1,106 @@
+\documentclass{jsarticle}
+
+\usepackage[top=30mm, bottom=36mm, left=28mm, right=28mm]{geometry}
+\usepackage[yyyymmdd]{datetime}
+
+\usepackage{../common/mytitle}
+
+\title{データ解析特論 第7回}
+\author{201720690 小松 弘人}
+\date{\today}
+\pagestyle{empty}
+
+\makeatletter
+\def\mojiparline#1{
+    \newcounter{mpl}
+    \setcounter{mpl}{#1}
+    \@tempdima=\linewidth
+    \advance\@tempdima by-\value{mpl}zw
+    \addtocounter{mpl}{-1}
+    \divide\@tempdima by \value{mpl}
+    \advance\kanjiskip by\@tempdima
+    \advance\parindent by\@tempdima
+}
+\makeatother
+\def\linesparpage#1{
+    \baselineskip=\textheight
+    \divide\baselineskip by #1
+}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+\subsection*{選択した論文}
+田向権, 関根優年, 自己組織化ニューラルネットワークのための動的再構成プラットフォーム,
+電子情報通信学会技術研究報告 SIS, スマートインフォメディアシステム 110 (445), pp. 13--17, 2011.
+
+\subsection*{検定の有無}
+この論文では、検定は行われていない。
+
+\subsection*{論文の要旨}
+自己組織化マップ (Self Organizing Map; SOM) の実時間処理・組み込みシステム実現のために
+デジタルハードウェア実装による専用ハードウェアアーキテクチャが提案されてきた。
+しかし、これらの実装は、ASICや特定のFPGAボードで実現されているため、
+デザインの再利用や、その他のアプリケーションへの応用のためには大幅な手直しが伴う。
+この論文では、自己組織化マップのための動的再構成プラットフォームを提案することにより、
+手直しの工程を削減し、アプリケーションの効率的な開発を促している。
+
+この論文では、プラットフォームの性能をMege Connection Update Per Second (MCUPS) と呼ばれる単位で
+評価している。
+これは、1秒あたりに更新できる回数を意味する。
+このプラットフォームの性能は、実機を用いて検証されており、
+この論文で提案されたプラットフォームの性能が6305MCUPSであるのに対し、
+ソフトウェアのみでの実装は62MCUPSであることから、性能は約100倍であるとしている。
+
+また、提案したプラットフォームのリソース消費量および
+過去に提案された論文の実装との性能の比較についても述べられている。
+以下に表を抜粋する。
+
+\setcounter{table}{1}
+\begin{quotation}
+    \begin{table}[h]
+        \centering
+        \caption{Implementation results of four networks using xc3s4000 User FPGA}
+        \label{tbl:resource}
+        \begin{tabular}{c|c|c|c|c|c|c}
+            \hline
+            No. & Distance  & WTA      & Slice           & BRAM       & MULT.      & Freq. (MHz) \\ \hline
+            1.  & Manhattan & Accurate &  5,442 (19.7\%) & 96 (100\%) & 0  (  0\%) & 74.43 \\ \hline
+            2.  & Euclidean & Accurate &  6,665 (24.1\%) & 96 (100\%) & 96 (100\%) & 74.43 \\ \hline
+            3.  & Manhattan & Rough    &  8,995 (32.5\%) & 96 (100\%) & 0  (  0\%) & 69.26 \\ \hline
+            4.  & Euclidean & Rough    & 12,681 (46.2\%) & 96 (100\%) & 96 (100\%) & 69.26 \\ \hline
+        \end{tabular}
+    \end{table}
+    \begin{table}[h]
+        \centering
+        \caption{Comparison of the proposed platform with the other platforms}
+        \label{tbl:cmp}
+        \begin{tabular}{c|c|c|c|c}
+            \hline
+            Reference & Proposed & 文献 [14] & 文献 [9] & 文献 [6] \\ \hline
+            Device & XC3S4000 &XC2V10000 &XC3S1600E &ASIC 0.8$\mu m$ \\ \hline
+            Performance (MCUPS) &6,305 &17,360 &632 &NA \\ \hline
+            Learning mode &SOM, VQ &SOM, RBFN, etc. &parameter-less SOM &NG \\ \hline
+            Reconfigurability &Yes &Yes &No &No \\ \hline
+        \end{tabular}
+    \end{table}
+\end{quotation}
+
+\subsection*{検定をしなくても妥当性が主張できる理由と考察}
+FPGAによる専用アーキテクチャの性能で重要とされるのは、
+処理に必要なクロック数と動作周波数から求まる最大性能と、ハードウェアリソース消費量である。
+これらの専用アーキテクチャの性能は、入力データやパラメータなどの問題の規模や
+アーキテクチャの構造に応じて一意に定まることが多い。
+この論文でも、入力データ (参照ベクトル) の次元と演算精度から最大性能が求められている。
+
+最大性能とされているのは、データ入力の時間を除外するためであると考えられる。
+FPGAによる専用アーキテクチャの論文では、 提案したアーキテクチャの構造と無関係である
+データ入力などの処理を除いた性能が議論される。
+したがって、既存のハードウェア実装との比較 (表\ref{tbl:cmp}) は妥当である。
+
+また、ハードウェアリソース消費量は、実装時にFPGA開発ツールを用いて計測され、
+その値は一意に定まるものである (表\ref{tbl:resource})。
+したがって、FPGAによる専用アーキテクチャの性能は問題の規模やその構造から一意に定まる。
+以上の理由から、検定をしなくても妥当性を主張することが可能であると考えられる。
+
+\end{document}
