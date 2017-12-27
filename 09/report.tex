@@ -1,0 +1,368 @@
+\documentclass{jsarticle}
+
+\usepackage[top=30mm, bottom=36mm, left=28mm, right=28mm]{geometry}
+\usepackage[yyyymmdd]{datetime}
+\usepackage{listings}
+
+\makeatletter
+\def\maketitle{%
+    \null
+    \thispagestyle{empty}%
+    \vfill
+    \begin{center}\leavevmode
+        \normalfont
+        {\LARGE \@title\par}%
+        \vskip 1cm
+        {\Large \@author\par}%
+        \vskip 1cm
+        {\Large \@date\par}%
+    \end{center}%
+    \vfill
+    \null
+    \@thanks%\vfil\null
+    \cleardoublepage
+}
+\makeatother
+
+\title{データ解析特論 第9回\\Wikipediaの記事のクラスタリングと評価}
+\author{201720690 小松 弘人}
+\date{\today}
+\pagestyle{empty}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+\section{課題}
+Wikipediaの記事のクラスタリングと評価を行う。
+対象となるデータは、以下からダウンロードした2つのデータである。
+\begin{itemize}
+    \item http://snap.stanford.edu/data/wikispeedia.html
+    \begin{itemize}
+        \item wikispeedia\_paths-and-graph.tar.gz
+        \item wikispeedia\_articles\_plaintext.tar.gz
+    \end{itemize}
+\end{itemize}
+少なくともネットワークに基づくクラスタリング手法、
+特徴ベクトルの類似度に基づくクラスタリング手法を
+1つずつ評価すること。
+また、少なくとも1種類の評価指標を用いて
+クラスタリング結果の良さを定量的に評価すること。
+
+\subsection{ネットワークに基づくクラスタリング}
+links.txtに記事間のリンク関係が記述されている。
+これを用いて、ネットワークに基づくクラスタリング手法で
+記事のクラスタリングを行う。
+
+categories.txtには、記事のカテゴリが記述されている。
+このカテゴリを正解ラベルであるとみなして、
+何らかの指標でクラスタリングの結果を評価する。
+カテゴリは、subject.Science.Physics.Space\_Astronomy
+のように階層構造になっている。
+
+\subsection{特徴ベクトルの類似度に基づくクラスタリング}
+plaintext\_articlesディレクトリには、各記事の本文が
+プレーンテキスト形式で保存されている。
+記事の本文で使用されている単語を基に各記事を
+特徴ベクトルで表現し、特徴ベクトルの類似度に基づく
+クラスタリング手法で記事をクラスタリングする。
+
+categories.txtには、記事のカテゴリが記述されている。
+このカテゴリを正解ラベルであるとみなして、
+何らかの指標でクラスタリングの結果を評価する。
+カテゴリは、subject.Science.Physics.Space\_Astronomy
+のように階層構造になっている。
+
+\section{データの前処理}
+データの前処理は、manabaにアップロードされている
+network\_clustering.pl, bag\_of\_words.plを用いた。
+network\_clustering.plは、各記事をノード、リンクをエッジとして
+表現するグラフのエッジリストおよび各記事のカテゴリの情報を
+整形するプログラムである。
+エッジリストはnetwork\_hash.txt,
+カテゴリの情報はcategory\_hash.txtとして保存される。
+bag\_of\_words.plは、各記事で用いられる単語の出現頻度の
+ベクトルを出力するプログラムである。
+確認する単語は、全記事で出現する単語のうち
+出現頻度の多い300単語のみである。
+各記事のカテゴリと特徴ベクトルは、bow.txtとして保存される。
+ネットワークに基づくクラスタリングには、
+network\_hash.txt, category\_hash.txt、
+特徴ベクトルの類似度に基づくクラスタリングには、bow.txtを用いる。
+
+\section{用いたクラスタリング手法}
+\subsection{ネットワークに基づくクラスタリング}
+Fast Newman法によってクラスタリングを行った。
+ネットワークに基づくクラスタリングでは、
+Modularityと呼ばれるネットワークにおけるクラスタリングの
+良さを測る指標を最大化することでクラスタリングを行う。
+Fast Newman法では、このModularityの変化$\Delta Q$に着目し、
+準最適な最大値を求めることで、高速にクラスタリングを行う。
+
+\subsection{特徴ベクトルの類似度に基づくクラスタリング}
+非階層的な手法であるk-means法によるクラスタリングと、
+階層的な手法であるデンドログラムを用いたクラスタリングを行う。
+
+k-means法では、まずクラスタの代表点をk個決め、
+各データと各代表点の距離を計算する。
+次に、距離が最短となる代表点のクラスタをデータの属する
+クラスタとし、データが属するクラスタが変化したかどうかを調べる。
+そして、変化していなかった場合はそこで完了とし、
+変化していた場合は各クラスタに属するデータの中心を
+新しい代表点として手順を繰り返すことで、
+データのクラスタリングを行う。
+
+デンドログラムを用いた手法では、まずクラスタの併合関係を表す
+デンドログラムを計算し、これをカットすることでクラスタリングを行う。
+
+各記事の特徴ベクトルは、出現頻度が多い300単語の
+記事内での出現頻度を表したベクトルを用いる。
+また、各手法のパラメータは$k=15$とする。
+これは、今回の記事のカテゴリの種類と同じである。
+
+\section{用いた評価指標}
+PurityおよびF-measureを用いた評価を行った。
+
+\subsection{Purity}
+Purityは、以下の式で表される。
+ただし、$N$はデータ数、$K$はクラスタ数、
+$C_i$はクラスタ$i$に属するデータの集合、
+$A_h$は正解ラベルが$h$であるデータの集合を表す。
+Purityは、クラスタがどれだけ多数派で占められているかを
+表す尺度である。
+\begin{equation}
+    \frac{1}{N}\sum_{i=1}^K \max_h |C_i \cap A_h|
+\end{equation}
+
+\subsection{F-measure}
+F-measureは、以下の式で表される。
+\begin{equation}
+    P_{h,k}=\frac{|A_h \cap C_k|}{|C_k|}
+\end{equation}
+\begin{equation}
+    R_{h,k}=\frac{|A_h \cap C_k|}{|A_h|}
+\end{equation}
+\begin{equation}
+    F_{h,k}=\frac{2R_{h,k}P_{h,k}}{R_{h,k}+P_{h,k}}
+\end{equation}
+F-measureは、適合率(Precision)と再現率(Recall)の調和平均である。
+したがって、正確性と網羅性を総合的に表す尺度である。
+クラスタリングの評価指標として用いる際は、
+以下の値を用いる。
+\begin{equation}
+    F=\sum_{h=1}^K \frac{|A_h|}{N} \max_k F_{h,k}
+\end{equation}
+
+\section{評価結果}
+それぞれの手法に対する評価指標の結果を以下に示す。
+
+\begin{table}[h]
+    \caption{評価結果}
+    \centering
+    \begin{tabular}{c|c|c} \hline
+        手法 & Purity & F-measure \\ \hline
+        Fast Newman法 & 0.3364506 & 0.115294 \\
+        k-means法 & 0.3449326 & 0.1098105 \\
+        Dendrogram & 0.2346672 & 0.08339957 \\ \hline
+    \end{tabular}
+\end{table}
+
+\section{評価結果に対する考察}
+Purityの評価指標ではk-means法が最もよく、次いで
+Fast Newman法、デンドログラムを用いた方法だったが、
+F-measureの評価指標ではFast Newman法が最もよく、
+次いでk-means法、デンドログラムを用いた手法となった。
+このように、評価指標によって評価が異なることが確認できた。
+
+\appendix
+\section{評価に用いたプログラム}
+\subsection{評価指標}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single]
+purity = function(ct) {
+    sum(apply(ct, 1, max)) / sum(ct)
+}
+
+f_measure = function(ct) {
+    F_h_k = matrix(0, nrow=nrow(ct), ncol=ncol(ct))
+    for(h in 1:ncol(ct)) {
+        for(k in 1:nrow(ct)) {
+            F_h_k[k, h] = (2 * ct[k, h]) / (sum(ct[k, ]) + sum(ct[, h]))
+        }
+    }
+
+    F_h = matrix(0, ncol=ncol(ct))
+    for(h in 1:ncol(ct)) {
+        F_h = sum(ct[, h]) / sum(ct) * max(F_h_k[, h])
+    }
+    sum(F_h)
+}
+\end{lstlisting}
+\subsection{クラスタリング}
+\subsubsection{Fast Newman法}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single]
+library(igraph)
+source('indicator.R')
+g = read.graph("network_hash.txt", directed=F)
+g2 = simplify(g)
+cluster = fastgreedy.community(g2)
+category = read.table("category_hash.txt")
+ct = table(cluster$membership,category$V1)
+purity(ct)
+f_measure(ct)
+\end{lstlisting}
+\subsubsection{k-means法}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single]
+source('indicator.R')
+bow = read.table("bow.txt", sep=" ")
+bow2 = bow
+bow2$V1 = NULL
+bow2$V2 = NULL
+km = kmeans(bow2, 15)
+ct = table(km$cluster, bow$V2)
+purity(ct)
+f_measure(ct)
+\end{lstlisting}
+\newpage
+\subsubsection{デンドログラムを用いた手法}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single]
+source('indicator.R')
+bow = read.table("bow.txt", sep=" ")
+bow2 = bow
+bow2$V1 = NULL
+bow2$V2 = NULL
+d = dist(bow2)
+hc = hclust(d)
+plot(hc)
+res = cutree(hc, k=15)
+ct = table(res, bow$V2)
+purity(ct)
+f_measure(ct)
+\end{lstlisting}
+\section{前処理に用いたスクリプト}
+\subsection{network\_clustering.pl}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single]
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+open(IN,"wikispeedia_paths-and-graph/categories.tsv") or die;
+my %hash;
+my $count=0;
+open(OUT,">category_hash.txt");
+while(my $line=<IN>){
+	chomp $line;
+	next if($line=~/^#/);
+	if($line=~/(.+)\s+(.+)/){
+		unless (defined $hash{$1}){
+			$hash{$1}=$count++;
+			my @categories=split(/\./,$2);
+			print OUT $categories[1],"\n";
+
+		}
+	}
+}
+close(OUT);
+close(IN);
+open(OUT,">network_hash.txt");
+open(IN,"wikispeedia_paths-and-graph/links.tsv") or die;
+while(my $line=<IN>){
+	chomp $line;
+	next if($line=~/^#/);
+	if($line=~/(.+)\s+(.+)/){
+		next unless (defined $hash{$1});
+		next unless (defined $hash{$2});
+		print OUT $hash{$1}," ",$hash{$2},"\n"
+	}
+}
+close(OUT);
+close(IN);
+\end{lstlisting}
+\subsection{bag\_of\_words.pl}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single]
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my $dimension=300;
+
+open(IN,"wikispeedia_paths-and-graph/categories.tsv") or die;
+my %category;
+while(my $line=<IN>){
+    chomp $line;
+    next if($line=~/^#/);
+    if($line=~/(.+)\s+(.+)/){
+        unless (defined $category{$1}){
+            my @categories=split(/\./,$2);
+            $category{$1}=$categories[1];
+        }
+    }
+}
+close(IN);
+
+open(IN,"stopwords.txt") or die;
+my %stop;
+while(my $line=<IN>){
+    chomp $line;
+    $stop{$line}=1;
+}
+close(IN);
+
+my %all_article_word_count;
+my $dirname="plaintext_articles";
+opendir(DIR,$dirname) or die;
+my @files=readdir(DIR);
+closedir(DIR);
+
+foreach my $file(@files){
+    next unless ($file=~/^(.+?)\.txt$/);
+    next unless (defined $category{$1});
+    open(IN,"$dirname/$file") or die;
+
+    while(my $line=<IN>){
+        chomp $line;
+        my @array=split(/\s+/,$line);
+        foreach (@array){
+            next if($_ eq "");
+            next if (defined $stop{lc($_)});
+            $all_article_word_count{lc($_)}++;
+        }
+    }
+    close(IN);
+}
+
+
+my @word_order=sort {$all_article_word_count{$b}<=>$all_article_word_count{$a}} keys %all_article_word_count;
+
+open(OUT,">bow.txt");
+foreach my $file (@files){
+    next unless ($file=~/(.+)?\.txt/);
+    next unless (defined $category{$1});
+    print OUT $1," ",$category{$1};
+    my %hash;
+    open(IN,"$dirname/$file") or die;
+    while(my $line=<IN>){
+        chomp $line;
+        my @array=split(/\s+/,$line);
+        foreach (@array){
+            next if (defined $stop{lc($_)});
+            next if($_ eq "");
+            $hash{lc($_)}++;
+        }
+    }
+    close(IN);
+    my $count=0;
+    foreach my $w (@word_order){
+        if(defined $hash{$w}){
+            print OUT " $hash{$w}";
+        }
+        else{
+            print OUT " 0";
+        }
+        $count++;
+        last if($count>$dimension);
+    }
+    print OUT "\n";
+}
+
+close(OUT);
+\end{lstlisting}
+\end{document}
